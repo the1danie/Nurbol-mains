@@ -157,7 +157,7 @@ export default function SanPage() {
           const color = SCALE_COLORS[section.scale]
           return (
             <div key={section.scale} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-              <div className={`px-5 py-3 bg-${color}-50 border-b border-${color}-100`}>
+              <div className={`px-5 py-3 bg-${color}-50`}>
                 <h2 className={`font-semibold text-${color}-700`}>{section.label}</h2>
               </div>
               <div className="divide-y divide-slate-100">
