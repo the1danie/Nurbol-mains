@@ -1,0 +1,277 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/hooks/useAuth'
+import { CheckCircle, RefreshCw, Brain } from 'lucide-react'
+
+type Answers = Record<string, number | null>
+
+const QUESTIONS = [
+  {
+    scale: 'wellbeing',
+    label: 'Самочувствие',
+    items: [
+      { key: 'q1',  neg: 'Плохое',      pos: 'Хорошее'  },
+      { key: 'q2',  neg: 'Слабость',    pos: 'Сила'      },
+      { key: 'q3',  neg: 'Усталость',   pos: 'Бодрость'  },
+      { key: 'q4',  neg: 'Болезненное', pos: 'Здоровое'  },
+    ],
+  },
+  {
+    scale: 'activity',
+    label: 'Активность',
+    items: [
+      { key: 'q5',  neg: 'Пассивность',  pos: 'Активность'         },
+      { key: 'q6',  neg: 'Вялость',      pos: 'Энергичность'       },
+      { key: 'q7',  neg: 'Медлительность', pos: 'Быстрота'         },
+      { key: 'q8',  neg: 'Безразличие',  pos: 'Заинтересованность' },
+    ],
+  },
+  {
+    scale: 'mood',
+    label: 'Настроение',
+    items: [
+      { key: 'q9',  neg: 'Плохое',      pos: 'Хорошее'   },
+      { key: 'q10', neg: 'Грустное',    pos: 'Радостное'  },
+      { key: 'q11', neg: 'Напряжённое', pos: 'Спокойное'  },
+      { key: 'q12', neg: 'Тревожное',   pos: 'Уверенное'  },
+    ],
+  },
+]
+
+const SCALE_COLORS: Record<string, string> = {
+  wellbeing: 'blue',
+  activity:  'emerald',
+  mood:      'violet',
+}
+
+function getLevel(score: number): { label: string; color: string } {
+  if (score <= 3.0) return { label: 'Низкий', color: 'text-red-600' }
+  if (score <= 5.0) return { label: 'Средний', color: 'text-yellow-600' }
+  return { label: 'Высокий', color: 'text-green-600' }
+}
+
+function avg(values: (number | null)[]): number {
+  const nums = values.filter((v): v is number => v !== null)
+  return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0
+}
+
+const defaultAnswers: Answers = {
+  q1: null, q2: null, q3: null, q4: null,
+  q5: null, q6: null, q7: null, q8: null,
+  q9: null, q10: null, q11: null, q12: null,
+}
+
+export default function SanPage() {
+  const { user } = useAuth()
+  const [answers, setAnswers] = useState<Answers>(defaultAnswers)
+  const [result, setResult] = useState<{ wellbeing: number; activity: number; mood: number } | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [existingId, setExistingId] = useState<string | null>(null)
+  const today = new Date().toISOString().split('T')[0]
+
+  useEffect(() => {
+    if (!user) return
+    supabase
+      .from('san_tests')
+      .select('*')
+      .eq('teacher_id', user.id)
+      .eq('date', today)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setExistingId(data.id)
+          const loaded: Answers = {}
+          for (let i = 1; i <= 12; i++) loaded[`q${i}`] = data[`q${i}`] ?? null
+          setAnswers(loaded)
+          setResult({ wellbeing: data.wellbeing, activity: data.activity, mood: data.mood })
+        }
+      })
+  }, [user, today])
+
+  const allAnswered = Object.values(answers).every(v => v !== null)
+
+  const handleSubmit = async () => {
+    if (!allAnswered || !user) return
+
+    const wellbeing = parseFloat(avg([answers.q1, answers.q2, answers.q3, answers.q4]).toFixed(2))
+    const activity  = parseFloat(avg([answers.q5, answers.q6, answers.q7, answers.q8]).toFixed(2))
+    const mood      = parseFloat(avg([answers.q9, answers.q10, answers.q11, answers.q12]).toFixed(2))
+
+    setResult({ wellbeing, activity, mood })
+    setSaving(true)
+
+    const payload = {
+      teacher_id: user.id,
+      date: today,
+      ...answers,
+      wellbeing,
+      activity,
+      mood,
+    }
+
+    if (existingId) {
+      await supabase.from('san_tests').update(payload).eq('id', existingId)
+    } else {
+      const { data } = await supabase.from('san_tests').insert(payload).select().single()
+      if (data) setExistingId(data.id)
+    }
+
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 3000)
+  }
+
+  const handleReset = () => {
+    setAnswers(defaultAnswers)
+    setResult(null)
+    setExistingId(null)
+    setSaved(false)
+  }
+
+  return (
+    <div className="p-4 sm:p-6 max-w-3xl mx-auto">
+      {/* Заголовок */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
+          <Brain className="w-5 h-5 text-violet-600" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-slate-800">САН-тест</h1>
+          <p className="text-sm text-slate-500">Самочувствие · Активность · Настроение</p>
+        </div>
+      </div>
+
+      {/* Инструкция */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-sm text-blue-800">
+        Оцените своё текущее состояние по каждой строке, выбрав значение от <b>1</b> (максимально негативное) до <b>7</b> (максимально позитивное).
+      </div>
+
+      {/* Вопросы */}
+      <div className="space-y-6">
+        {QUESTIONS.map((section) => {
+          const color = SCALE_COLORS[section.scale]
+          return (
+            <div key={section.scale} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div className={`px-5 py-3 bg-${color}-50 border-b border-${color}-100`}>
+                <h2 className={`font-semibold text-${color}-700`}>{section.label}</h2>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {section.items.map(({ key, neg, pos }) => (
+                  <div key={key} className="px-4 py-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      {/* Негативный полюс */}
+                      <span className="text-xs text-slate-500 w-20 sm:w-28 text-right shrink-0 leading-tight">{neg}</span>
+
+                      {/* Радиокнопки 1–7 */}
+                      <div className="flex items-center justify-center gap-1 sm:gap-2 flex-1">
+                        {[1, 2, 3, 4, 5, 6, 7].map((val) => (
+                          <label key={val} className="flex flex-col items-center gap-0.5 cursor-pointer">
+                            <input
+                              type="radio"
+                              name={key}
+                              value={val}
+                              checked={answers[key] === val}
+                              onChange={() => setAnswers(prev => ({ ...prev, [key]: val }))}
+                              className="sr-only"
+                            />
+                            <div
+                              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center text-xs font-semibold transition-all ${
+                                answers[key] === val
+                                  ? `bg-${color}-600 border-${color}-600 text-white`
+                                  : 'border-slate-300 text-slate-400 hover:border-slate-400'
+                              }`}
+                            >
+                              {val}
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+
+                      {/* Позитивный полюс */}
+                      <span className="text-xs text-slate-500 w-20 sm:w-28 shrink-0 leading-tight">{pos}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Кнопка */}
+      {!result && (
+        <div className="mt-6">
+          <button
+            onClick={handleSubmit}
+            disabled={!allAnswered || saving}
+            className="w-full bg-violet-600 hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-3 rounded-xl transition-colors"
+          >
+            {saving ? 'Сохранение...' : 'Получить результат'}
+          </button>
+          {!allAnswered && (
+            <p className="text-center text-xs text-slate-400 mt-2">Ответьте на все вопросы</p>
+          )}
+        </div>
+      )}
+
+      {/* Результат */}
+      {result && (
+        <div className="mt-6 space-y-4">
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { key: 'wellbeing', label: 'Самочувствие', score: result.wellbeing, color: 'blue' },
+              { key: 'activity',  label: 'Активность',   score: result.activity,  color: 'emerald' },
+              { key: 'mood',      label: 'Настроение',   score: result.mood,      color: 'violet' },
+            ].map(({ key, label, score, color }) => {
+              const level = getLevel(score)
+              return (
+                <div key={key} className={`bg-${color}-50 border border-${color}-200 rounded-xl p-4 text-center`}>
+                  <div className={`text-2xl font-bold text-${color}-700`}>{score.toFixed(1)}</div>
+                  <div className="text-xs font-medium text-slate-600 mt-0.5">{label}</div>
+                  <div className={`text-xs font-semibold mt-1 ${level.color}`}>{level.label}</div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Интерпретация */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm text-slate-700 space-y-1">
+            <div className="font-semibold text-slate-800 mb-2">Интерпретация</div>
+            <div className="flex gap-4 text-xs">
+              <span className="text-red-600 font-medium">1.0–3.0 — Низкий</span>
+              <span className="text-yellow-600 font-medium">3.1–5.0 — Средний</span>
+              <span className="text-green-600 font-medium">5.1–7.0 — Высокий</span>
+            </div>
+          </div>
+
+          {/* Рекомендация */}
+          {(result.wellbeing < 3.5 || result.activity < 3.5 || result.mood < 3.5) && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+              <b>Рекомендация:</b> один или несколько показателей ниже нормы. Рекомендуется обратить внимание на режим отдыха и уровень рабочей нагрузки.
+            </div>
+          )}
+
+          {saved && (
+            <div className="flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm">
+              <CheckCircle className="w-4 h-4 shrink-0" />
+              Результат сохранён
+            </div>
+          )}
+
+          <button
+            onClick={handleReset}
+            className="w-full flex items-center justify-center gap-2 border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium py-3 rounded-xl transition-colors text-sm"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Пройти тест заново
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}

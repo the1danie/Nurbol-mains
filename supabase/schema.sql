@@ -132,6 +132,37 @@ SELECT
 FROM health_records hr
 LEFT JOIN daily_surveys ds ON hr.teacher_id = ds.teacher_id AND hr.date = ds.date;
 
+-- Таблица САН-тестов
+CREATE TABLE IF NOT EXISTS san_tests (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  teacher_id UUID REFERENCES teachers(id) ON DELETE CASCADE NOT NULL,
+  date DATE NOT NULL,
+  -- Самочувствие
+  q1 INTEGER CHECK (q1 BETWEEN 1 AND 7),
+  q2 INTEGER CHECK (q2 BETWEEN 1 AND 7),
+  q3 INTEGER CHECK (q3 BETWEEN 1 AND 7),
+  q4 INTEGER CHECK (q4 BETWEEN 1 AND 7),
+  -- Активность
+  q5 INTEGER CHECK (q5 BETWEEN 1 AND 7),
+  q6 INTEGER CHECK (q6 BETWEEN 1 AND 7),
+  q7 INTEGER CHECK (q7 BETWEEN 1 AND 7),
+  q8 INTEGER CHECK (q8 BETWEEN 1 AND 7),
+  -- Настроение
+  q9  INTEGER CHECK (q9  BETWEEN 1 AND 7),
+  q10 INTEGER CHECK (q10 BETWEEN 1 AND 7),
+  q11 INTEGER CHECK (q11 BETWEEN 1 AND 7),
+  q12 INTEGER CHECK (q12 BETWEEN 1 AND 7),
+  -- Средние баллы
+  wellbeing NUMERIC(4,2),
+  activity  NUMERIC(4,2),
+  mood      NUMERIC(4,2),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE san_tests ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Teachers can manage own san tests" ON san_tests;
+CREATE POLICY "Teachers can manage own san tests" ON san_tests FOR ALL USING (auth.uid() = teacher_id);
+
 -- Удаляем старый триггер если существует
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 

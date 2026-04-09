@@ -7,13 +7,14 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import {
   LayoutDashboard, Heart, Calendar, BarChart3,
-  Download, User, LogOut, Languages, Menu, X
+  Download, User, LogOut, Languages, Menu, X, Brain
 } from 'lucide-react'
 import i18n from '@/lib/i18n'
 
 const navItems = [
   { key: 'dashboard', href: '/dashboard', icon: LayoutDashboard },
   { key: 'health',    href: '/health',    icon: Heart },
+  { key: 'san',       href: '/san',       icon: Brain },
   { key: 'schedule',  href: '/schedule',  icon: Calendar },
   { key: 'analytics', href: '/analytics', icon: BarChart3 },
   { key: 'export',    href: '/export',    icon: Download },
