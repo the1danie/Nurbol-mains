@@ -94,7 +94,7 @@ export default function DashboardPage() {
   const name = teacher?.full_name?.split(' ')[0] || ''
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-6xl mx-auto pb-24 lg:pb-6">
       {/* Приветствие */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-800">

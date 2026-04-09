@@ -105,22 +105,23 @@ export default function SchedulePage() {
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 sm:p-6 max-w-4xl mx-auto pb-24 lg:pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <h1 className="text-2xl font-bold text-slate-800">{t('schedule.title')}</h1>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <input
             type="month"
             value={filterMonth}
             onChange={e => setFilterMonth(e.target.value)}
-            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 sm:flex-none border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
-            {t('schedule.addLesson')}
+            <span className="hidden sm:inline">{t('schedule.addLesson')}</span>
+            <span className="sm:hidden">+</span>
           </button>
         </div>
       </div>

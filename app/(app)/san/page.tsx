@@ -150,7 +150,7 @@ export default function SanPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-3xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-3xl mx-auto pb-24 lg:pb-6">
       {/* Заголовок */}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
