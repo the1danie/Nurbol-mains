@@ -1,0 +1,4 @@
+services:
+  app:
+    image: ghcr.io/the1danie/nurbol-mains:latest
+    build: !reset null
