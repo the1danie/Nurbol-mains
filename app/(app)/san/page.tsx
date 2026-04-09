@@ -178,12 +178,19 @@ export default function SanPage() {
               </div>
               <div className="divide-y divide-slate-100">
                 {section.items.map(({ key, neg, pos }) => (
-                  <div key={key} className="px-4 py-3">
+                  <div key={key} className="px-4 py-3 space-y-2">
+                    {/* Метки — на мобилке сверху, на десктопе по бокам */}
+                    <div className="flex items-center justify-between sm:hidden">
+                      <span className="text-xs text-slate-500 leading-tight">{neg}</span>
+                      <span className="text-xs text-slate-500 leading-tight">{pos}</span>
+                    </div>
                     <div className="flex items-center gap-2 sm:gap-3">
-                      <span className="text-xs text-slate-500 w-20 sm:w-28 text-right shrink-0 leading-tight">{neg}</span>
-                      <div className="flex items-center justify-center gap-1 sm:gap-2 flex-1">
+                      {/* Левая метка — только десктоп */}
+                      <span className="hidden sm:block text-xs text-slate-500 w-28 text-right shrink-0 leading-tight">{neg}</span>
+                      {/* Кнопки */}
+                      <div className="flex items-center justify-between sm:justify-center gap-1 sm:gap-2 flex-1">
                         {[1, 2, 3, 4, 5, 6, 7].map((val) => (
-                          <label key={val} className="flex flex-col items-center gap-0.5 cursor-pointer">
+                          <label key={val} className="cursor-pointer">
                             <input
                               type="radio"
                               name={key}
@@ -193,10 +200,10 @@ export default function SanPage() {
                               className="sr-only"
                             />
                             <div
-                              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center text-xs font-semibold transition-all ${
+                              className={`w-9 h-9 sm:w-9 sm:h-9 rounded-full border-2 flex items-center justify-center text-sm font-semibold transition-all active:scale-95 ${
                                 answers[key] === val
                                   ? styles.selected
-                                  : 'border-slate-300 text-slate-400 hover:border-slate-400'
+                                  : 'border-slate-300 text-slate-400'
                               }`}
                             >
                               {val}
@@ -204,7 +211,8 @@ export default function SanPage() {
                           </label>
                         ))}
                       </div>
-                      <span className="text-xs text-slate-500 w-20 sm:w-28 shrink-0 leading-tight">{pos}</span>
+                      {/* Правая метка — только десктоп */}
+                      <span className="hidden sm:block text-xs text-slate-500 w-28 shrink-0 leading-tight">{pos}</span>
                     </div>
                   </div>
                 ))}
