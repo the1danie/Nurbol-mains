@@ -40,10 +40,26 @@ const QUESTIONS = [
   },
 ]
 
-const SCALE_COLORS: Record<string, string> = {
-  wellbeing: 'blue',
-  activity:  'emerald',
-  mood:      'violet',
+const SCALE_STYLES: Record<string, {
+  header: string
+  headerText: string
+  selected: string
+}> = {
+  wellbeing: {
+    header: 'bg-blue-50',
+    headerText: 'text-blue-700',
+    selected: 'bg-blue-600 border-blue-600 text-white',
+  },
+  activity: {
+    header: 'bg-emerald-50',
+    headerText: 'text-emerald-700',
+    selected: 'bg-emerald-600 border-emerald-600 text-white',
+  },
+  mood: {
+    header: 'bg-violet-50',
+    headerText: 'text-violet-700',
+    selected: 'bg-violet-600 border-violet-600 text-white',
+  },
 }
 
 function getLevel(score: number): { label: string; color: string } {
@@ -154,20 +170,17 @@ export default function SanPage() {
       {/* Вопросы */}
       <div className="space-y-6">
         {QUESTIONS.map((section) => {
-          const color = SCALE_COLORS[section.scale]
+          const styles = SCALE_STYLES[section.scale]
           return (
             <div key={section.scale} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-              <div className={`px-5 py-3 bg-${color}-50`}>
-                <h2 className={`font-semibold text-${color}-700`}>{section.label}</h2>
+              <div className={`px-5 py-3 ${styles.header}`}>
+                <h2 className={`font-semibold ${styles.headerText}`}>{section.label}</h2>
               </div>
               <div className="divide-y divide-slate-100">
                 {section.items.map(({ key, neg, pos }) => (
                   <div key={key} className="px-4 py-3">
                     <div className="flex items-center gap-2 sm:gap-3">
-                      {/* Негативный полюс */}
                       <span className="text-xs text-slate-500 w-20 sm:w-28 text-right shrink-0 leading-tight">{neg}</span>
-
-                      {/* Радиокнопки 1–7 */}
                       <div className="flex items-center justify-center gap-1 sm:gap-2 flex-1">
                         {[1, 2, 3, 4, 5, 6, 7].map((val) => (
                           <label key={val} className="flex flex-col items-center gap-0.5 cursor-pointer">
@@ -182,7 +195,7 @@ export default function SanPage() {
                             <div
                               className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 flex items-center justify-center text-xs font-semibold transition-all ${
                                 answers[key] === val
-                                  ? `bg-${color}-600 border-${color}-600 text-white`
+                                  ? styles.selected
                                   : 'border-slate-300 text-slate-400 hover:border-slate-400'
                               }`}
                             >
@@ -191,8 +204,6 @@ export default function SanPage() {
                           </label>
                         ))}
                       </div>
-
-                      {/* Позитивный полюс */}
                       <span className="text-xs text-slate-500 w-20 sm:w-28 shrink-0 leading-tight">{pos}</span>
                     </div>
                   </div>
@@ -224,14 +235,14 @@ export default function SanPage() {
         <div className="mt-6 space-y-4">
           <div className="grid grid-cols-3 gap-3">
             {[
-              { key: 'wellbeing', label: 'Самочувствие', score: result.wellbeing, color: 'blue' },
-              { key: 'activity',  label: 'Активность',   score: result.activity,  color: 'emerald' },
-              { key: 'mood',      label: 'Настроение',   score: result.mood,      color: 'violet' },
-            ].map(({ key, label, score, color }) => {
+              { key: 'wellbeing', label: 'Самочувствие', score: result.wellbeing, card: 'bg-blue-50 border-blue-200', text: 'text-blue-700' },
+              { key: 'activity',  label: 'Активность',   score: result.activity,  card: 'bg-emerald-50 border-emerald-200', text: 'text-emerald-700' },
+              { key: 'mood',      label: 'Настроение',   score: result.mood,      card: 'bg-violet-50 border-violet-200', text: 'text-violet-700' },
+            ].map(({ key, label, score, card, text }) => {
               const level = getLevel(score)
               return (
-                <div key={key} className={`bg-${color}-50 border border-${color}-200 rounded-xl p-4 text-center`}>
-                  <div className={`text-2xl font-bold text-${color}-700`}>{score.toFixed(1)}</div>
+                <div key={key} className={`${card} border rounded-xl p-4 text-center`}>
+                  <div className={`text-2xl font-bold ${text}`}>{score.toFixed(1)}</div>
                   <div className="text-xs font-medium text-slate-600 mt-0.5">{label}</div>
                   <div className={`text-xs font-semibold mt-1 ${level.color}`}>{level.label}</div>
                 </div>
